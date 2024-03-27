@@ -40,6 +40,7 @@ public class Robot extends TimedRobot {
     m_controllerChooser.addOption("FeedForward with SlewRateLimiter", m_FFwithSlewRateController);
     m_flywheel.setDefaultCommand(m_flywheel.run(() -> {
       // Find out what controller should be used and update it
+      m_currentController = m_controllerChooser.getSelected();
       if (m_joystick.getHID().getAButton()) {
         // Here, we set the constant setpoint
         // of the currentController
@@ -48,7 +49,6 @@ public class Robot extends TimedRobot {
         // Otherwise, we update the setpoint to 0.
         m_currentController.setSetpoint(0.0);
       }
-      m_currentController = m_controllerChooser.getSelected();
       var volts = m_currentController.calculate();
       m_flywheel.setVoltage(volts);
       }

@@ -9,7 +9,8 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/SmartDashboard/Controller type": "String Chooser"
+      "/SmartDashboard/Controller type": "String Chooser",
+      "/SmartDashboard/FlywheelPIDController": "PIDController"
     },
     "windows": {
       "/SmartDashboard/Controller type": {
@@ -32,6 +33,9 @@
           "open": false
         },
         "Flywheel": {
+          "open": true
+        },
+        "FlywheelPIDController": {
           "open": true
         },
         "open": true
