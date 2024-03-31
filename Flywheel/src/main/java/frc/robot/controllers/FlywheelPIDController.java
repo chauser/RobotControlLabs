@@ -48,6 +48,7 @@ public class FlywheelPIDController extends FlywheelController{
     @Override
     public double calculate() {
         m_prevOutput += m_pid.calculate(m_flywheel.getRPM());
+        SmartDashboard.putNumber("Feedback", m_prevOutput);
         return m_prevOutput;
     }
     
