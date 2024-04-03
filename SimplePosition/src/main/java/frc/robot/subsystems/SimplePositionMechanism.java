@@ -77,7 +77,6 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   /** Subsystem constructor. */
   public SimplePositionMechanism() {
     m_Encoder.setDistancePerPulse(DrivetrainConstants.kEncoderDistPerPulse);
-    m_rightEncoder.setDistancePerPulse(DrivetrainConstants.kEncoderDistPerPulse);
   }
 
   double m_prevTime = Timer.getFPGATimestamp();
@@ -86,19 +85,16 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   public void simulationPeriodic() {
     // In this method, we update our simulation of what our flywheel is doing
     // First, we set our "inputs" (voltages)
-    m_drivetrainSim.setInputs(
-        m_motorSim.getSpeed() * RobotController.getBatteryVoltage(),
-        m_rightMotorSim.getSpeed() * RobotController.getBatteryVoltage()
-    );
+    var speed = m_motorSim.getSpeed() * RobotController.getBatteryVoltage();
+    m_drivetrainSim.setInputs(speed, speed);
 
     // Next, we update it. The standard loop time is 20ms.
     m_drivetrainSim.update(0.020);
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
     m_EncoderSim.setRate(m_drivetrainSim.getLeftVelocityMetersPerSecond());
-    m_rightEncoderSim.setRate(m_drivetrainSim.getRightVelocityMetersPerSecond());
     m_EncoderSim.setDistance(m_drivetrainSim.getLeftPositionMeters());
-    m_rightEncoderSim.setDistance(m_drivetrainSim.getRightPositionMeters());
+
     // BatterySim estimates loaded battery voltages
     var currentDraw = m_drivetrainSim.getCurrentDrawAmps();
     var batteryVoltage = BatterySim.calculateDefaultBatteryLoadedVoltage(currentDraw);
@@ -115,7 +111,6 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   /** Set both motor output voltages */
   public void setVoltage(double voltage) {
     m_Motor.setVoltage(voltage);
-    m_rightMotor.setVoltage(voltage);
   }
 
   /** Stop the control loop and motor output. */
@@ -127,33 +122,22 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     return m_Encoder.getRate();
   }
 
-  public double getRightVelocity() {
-    return m_rightEncoder.getRate();
-  }
-
-public double getLeftDistance() {
+  public double getDistance() {
     return m_Encoder.getDistance();
   }
 
-  public double getRightDistance() {
-    return m_rightEncoder.getDistance();
-  }
-
-
-  /** Update telemetry, including the mechanism visualization. */
+/** Update telemetry, including the mechanism visualization. */
   public void updateTelemetry() {
     // Update flywheel info on dashboard
     SmartDashboard.putNumber("SimplePosition/Velocity", getLeftVelocity());
     SmartDashboard.putNumber("SimplePosition/p.u.", m_Motor.get());
-    SmartDashboard.putNumber("SimplePosition/Position", m_Encoder.getDistance());
+    SmartDashboard.putNumber("SimplePosition/Position", getDistance());
   }
 
   @Override
   public void close() {
     m_Encoder.close();
-    m_rightEncoder.close();
     m_Motor.close();
-    m_rightMotor.close();
   }
 
   public Command sysIdQuasistaticCommand(Direction dir) {
