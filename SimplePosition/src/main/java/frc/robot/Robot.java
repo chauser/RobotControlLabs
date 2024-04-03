@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.controllers.SimplePositionBangBangController;
 import frc.robot.controllers.SimplePositionController;
 import frc.robot.controllers.SimplePositionProfiledPIDController;
 import frc.robot.controllers.SimplePositionFeedforwardController;
@@ -25,17 +24,15 @@ public class Robot extends TimedRobot {
   private final SimplePositionMechanism m_mechanism = new SimplePositionMechanism();
 
   private final SendableChooser<SimplePositionController> m_controllerChooser = new SendableChooser<>();
-  private final SimplePositionController m_bangbangController = new SimplePositionBangBangController(m_mechanism);
   private final SimplePositionController m_feedforwardController = new SimplePositionFeedforwardController(m_mechanism);
   private final SimplePositionController m_PIDController = new SimplePositionPIDController(m_mechanism);
   private final SimplePositionController m_PPID = new SimplePositionProfiledPIDController(m_mechanism);
-  private SimplePositionController m_currentController = m_bangbangController;
+  private SimplePositionController m_currentController = m_feedforwardController;
  
   @Override
   public void robotInit() {
     SmartDashboard.putData("Controller type", m_controllerChooser);
-    m_controllerChooser.setDefaultOption("BangBang", m_bangbangController);
-    m_controllerChooser.addOption("Feedforward", m_feedforwardController);
+    m_controllerChooser.setDefaultOption("Feedforward", m_feedforwardController);
     m_controllerChooser.addOption("PID", m_PIDController);
     // m_controllerChooser.addOption("FeedForward with SlewRateLimiter", m_FFwithSlewRateController);
     m_controllerChooser.addOption("Profiled PID", m_PPID);
@@ -49,7 +46,7 @@ public class Robot extends TimedRobot {
         })  
         .andThen(m_mechanism.run(() -> {
           var volts = m_currentController.calculate();
-          m_mechanism.setVoltages(volts);
+          m_mechanism.setVoltage(volts);
         })));
 
     m_joystick.povDown()
@@ -61,7 +58,7 @@ public class Robot extends TimedRobot {
         })  
         .andThen(m_mechanism.run(() -> {
           var volts = m_currentController.calculate();
-          m_mechanism.setVoltages(volts);
+          m_mechanism.setVoltage(volts);
         })));
     m_joystick.b().whileTrue(m_mechanism.sysIdQuasistaticCommand(Direction.kForward));
     m_joystick.y().whileTrue(m_mechanism.sysIdDynamicCommand(Direction.kForward));
