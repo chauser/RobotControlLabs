@@ -22,8 +22,9 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Elevator implements AutoCloseable {
+public class Elevator extends SubsystemBase implements AutoCloseable {
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
   private final DCMotor m_elevatorGearbox = DCMotor.getVex775Pro(4);
 
@@ -101,7 +102,10 @@ public class Elevator implements AutoCloseable {
 
     // With the setpoint value we run PID control like normal
     double pidOutput = m_controller.calculate(m_encoder.getDistance());
-    double feedforwardOutput = m_feedforward.calculate(m_controller.getSetpoint().velocity);
+    double feedforwardOutput = m_feedforward.calculate(
+      m_encoder.getRate(),
+      m_controller.getSetpoint().velocity,
+      0.02);
     m_motor.setVoltage(pidOutput + feedforwardOutput);
   }
 

@@ -4,17 +4,26 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
 public class Robot extends TimedRobot {
-  private final Joystick m_joystick = new Joystick(Constants.kJoystickPort);
+  private final CommandXboxController m_joystick = new CommandXboxController(Constants.kJoystickPort);
   private final Elevator m_elevator = new Elevator();
 
   @Override
-  public void robotInit() {}
+  public void robotInit() {
+    m_joystick.a()
+      .whileTrue(m_elevator.run(
+        () -> m_elevator.reachGoal(Constants.kSetpointMeters)
+      ))
+      .whileFalse(m_elevator.run(
+        () -> m_elevator.reachGoal(0.0)
+      ));
+  }
 
   @Override
   public void robotPeriodic() {
@@ -30,13 +39,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (m_joystick.getTrigger()) {
-      // Here, we set the constant setpoint of 0.75 meters.
-      m_elevator.reachGoal(Constants.kSetpointMeters);
-    } else {
-      // Otherwise, we update the setpoint to 0.
-      m_elevator.reachGoal(0.0);
-    }
+    CommandScheduler.getInstance().run();
   }
 
   @Override
