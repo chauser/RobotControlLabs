@@ -12,18 +12,27 @@ import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
 public class Robot extends TimedRobot {
+  static class Constants {
+    static final double kSetpointMeters = 0.75;
+    static final int kJoystickPort = 0;
+  }
+
   private final CommandXboxController m_joystick = new CommandXboxController(Constants.kJoystickPort);
   private final Elevator m_elevator = new Elevator();
 
   @Override
   public void robotInit() {
+    m_elevator.setDefaultCommand(m_elevator.run(m_elevator::stop));
+    m_joystick.y()
+      .whileTrue(m_elevator
+        .runOnce(() -> m_elevator.initGoal(Constants.kSetpointMeters))
+        .andThen(m_elevator.run(m_elevator::reachGoal))
+      );
     m_joystick.a()
-      .whileTrue(m_elevator.run(
-        () -> m_elevator.reachGoal(Constants.kSetpointMeters)
-      ))
-      .whileFalse(m_elevator.run(
-        () -> m_elevator.reachGoal(0.0)
-      ));
+      .whileTrue(m_elevator
+        .runOnce(() -> m_elevator.initGoal(0.0))
+        .andThen(m_elevator.run(m_elevator::reachGoal))
+      );
     m_joystick.povRight().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kForward));
     m_joystick.povLeft().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kReverse));
     m_joystick.povUp().whileTrue(m_elevator.sysIdDynamicCommand(Direction.kForward));

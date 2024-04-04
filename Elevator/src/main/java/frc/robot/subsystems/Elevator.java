@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.Distance;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.MutableMeasure;
@@ -17,7 +18,6 @@ import edu.wpi.first.units.Voltage;
 import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
-import frc.robot.Constants;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -35,6 +35,50 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 public class Elevator extends SubsystemBase implements AutoCloseable {
+
+  public class Constants {
+    public static final int kMotorPort = 0;
+    public static final int kEncoderAChannel = 0;
+    public static final int kEncoderBChannel = 1;
+    public static final int kJoystickPort = 0;
+
+    // Empirical
+    // public static final double kElevatorKp = 1.0;
+    // public static final double kElevatorKi = 0.0;
+    // public static final double kElevatorKd = 0.0;
+
+    // From WPILib example
+    public static final double kElevatorKp = 5.0;
+    public static final double kElevatorKi = 0.0;
+    public static final double kElevatorKd = 0.0;
+
+    // Constants from sysId
+    // public static final double kElevatorkS = 0.019; // volts (V)
+    // public static final double kElevatorkG = 0.837; // volts (V)
+    // public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
+    // public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
+    
+    // Constants from WPILib example
+    public static final double kElevatorkS = 0.0; // volts (V)
+    public static final double kElevatorkG = 0.762; // volts (V)
+    public static final double kElevatorkV = 0.762; // volt per velocity (V/(m/s))
+    public static final double kElevatorkA = 0.0; // volt per acceleration (V/(m/s²))
+
+    public static final double kElevatorGearing = 10.0;
+    public static final double kElevatorDrumRadius = Units.inchesToMeters(2.0);
+    public static final double kCarriageMass = 4.0; // kg
+
+    public static final double kSetpointMeters = 0.75;
+    // Encoder is reset to measure 0 at the bottom, so minimum height is 0.
+    public static final double kMinElevatorHeightMeters = 0.0;
+    public static final double kMaxElevatorHeightMeters = 1.25;
+
+    // distance per pulse = (distance per revolution) / (pulses per revolution)
+    //  = (Pi * D) / ppr
+    public static final double kElevatorEncoderDistPerPulse =
+        2.0 * Math.PI * kElevatorDrumRadius / 4096;
+  }
+
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
   private final DCMotor m_elevatorGearbox = DCMotor.getVex775Pro(4);
 
@@ -98,6 +142,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     // Publish Mechanism2d to SmartDashboard
     // To view the Elevator visualization, select Network Tables -> SmartDashboard -> Elevator Sim
     SmartDashboard.putData("Elevator Sim", m_mech2d);
+    SmartDashboard.putData("Elevator/PID", m_controller);
   }
 
   /** Advance the simulation. */
@@ -128,15 +173,16 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
    *
    * @param goal the position to maintain
    */
-  public void reachGoal(double goal) {
-    m_controller.setGoal(goal);
 
+  public void initGoal(double goal) {
+    m_controller.setGoal(goal);
+  }
+
+  public void reachGoal() {
     // With the setpoint value we run PID control like normal
     double pidOutput = m_controller.calculate(getPosition());
-    double feedforwardOutput = m_feedforward.calculate(
-      getVelocity(),
-      m_controller.getSetpoint().velocity,
-      0.02);
+    double feedforwardOutput = m_feedforward.calculate(m_controller.getSetpoint().velocity);
+    SmartDashboard.putNumber("Elevator/Feedback", pidOutput);
     m_motor.setVoltage(pidOutput + feedforwardOutput);
   }
 
@@ -151,11 +197,17 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   /** Stop the control loop and motor output. */
   public void stop() {
     m_controller.setGoal(0.0);
-    m_motor.set(0.0);
+    m_motor.setVoltage(Constants.kElevatorkG);
   }
 
   /** Update telemetry, including the mechanism visualization. */
   private void updateTelemetry() {
+    SmartDashboard.putNumber("Elevator/Position", getPosition());
+    SmartDashboard.putNumber("Elevator/Velocity", getVelocity());
+    var setPoint = m_controller.getSetpoint();
+    SmartDashboard.putNumber("Elevator/Profiled Position", setPoint.position);
+    SmartDashboard.putNumber("Elevator/Profiled Velocity", setPoint.velocity);
+    SmartDashboard.putNumber("Elevator/p.u.", m_motor.get());
     // Update elevator visualization with position
     m_elevatorMech2d.setLength(m_encoder.getDistance());
   }
