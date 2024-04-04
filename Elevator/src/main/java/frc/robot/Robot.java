@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
@@ -23,23 +24,19 @@ public class Robot extends TimedRobot {
       .whileFalse(m_elevator.run(
         () -> m_elevator.reachGoal(0.0)
       ));
+    m_joystick.povRight().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kForward));
+    m_joystick.povLeft().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kReverse));
+    m_joystick.povUp().whileTrue(m_elevator.sysIdDynamicCommand(Direction.kForward));
+    m_joystick.povDown().whileTrue(m_elevator.sysIdDynamicCommand(Direction.kReverse));
   }
 
   @Override
   public void robotPeriodic() {
-    // Update the telemetry, including mechanism visualization, regardless of mode.
-    m_elevator.updateTelemetry();
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    // Update the simulation model.
-    m_elevator.simulationPeriodic();
+    CommandScheduler.getInstance().run();
   }
 
   @Override
   public void teleopPeriodic() {
-    CommandScheduler.getInstance().run();
   }
 
   @Override

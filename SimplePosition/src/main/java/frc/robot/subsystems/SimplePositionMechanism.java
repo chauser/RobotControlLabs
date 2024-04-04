@@ -43,9 +43,9 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   // This gearbox represents a gearbox containing 2 Vex 775pro motors.
   private final DCMotor m_gearbox = DCMotor.getNEO(2);
 
-  private final Encoder m_Encoder =
+  private final Encoder m_encoder =
       new Encoder(DrivetrainConstants.kEncoderAChannel, DrivetrainConstants.kEncoderBChannel);
-  private final PWMSparkMax m_Motor = new PWMSparkMax(DrivetrainConstants.kMotorPort);
+  private final PWMSparkMax m_motor = new PWMSparkMax(DrivetrainConstants.kMotorPort);
 
   // Simulation classes help us simulate what's going on, including gravity.
   private final DifferentialDrivetrainSim m_drivetrainSim =
@@ -58,8 +58,8 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
         DrivetrainConstants.kTrackWidthMeters,
         null);
 
-  private final EncoderSim m_EncoderSim = new EncoderSim(m_Encoder);
-  private final PWMSim m_motorSim = new PWMSim(m_Motor);
+  private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
+  private final PWMSim m_motorSim = new PWMSim(m_motor);
 
   // Support for SysId
   private final SysIdRoutine m_sysid = new SysIdRoutine(
@@ -76,7 +76,7 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
 
   /** Subsystem constructor. */
   public SimplePositionMechanism() {
-    m_Encoder.setDistancePerPulse(DrivetrainConstants.kEncoderDistPerPulse);
+    m_encoder.setDistancePerPulse(DrivetrainConstants.kEncoderDistPerPulse);
   }
 
   double m_prevTime = Timer.getFPGATimestamp();
@@ -92,8 +92,8 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     m_drivetrainSim.update(0.020);
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
-    m_EncoderSim.setRate(m_drivetrainSim.getLeftVelocityMetersPerSecond());
-    m_EncoderSim.setDistance(m_drivetrainSim.getLeftPositionMeters());
+    m_encoderSim.setRate(m_drivetrainSim.getLeftVelocityMetersPerSecond());
+    m_encoderSim.setDistance(m_drivetrainSim.getLeftPositionMeters());
 
     // BatterySim estimates loaded battery voltages
     var currentDraw = m_drivetrainSim.getCurrentDrawAmps();
@@ -110,7 +110,7 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
 
   /** Set both motor output voltages */
   public void setVoltage(double voltage) {
-    m_Motor.setVoltage(voltage);
+    m_motor.setVoltage(voltage);
   }
 
   /** Stop the control loop and motor output. */
@@ -119,25 +119,25 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   }
 
   public double getLeftVelocity() {
-    return m_Encoder.getRate();
+    return m_encoder.getRate();
   }
 
   public double getDistance() {
-    return m_Encoder.getDistance();
+    return m_encoder.getDistance();
   }
 
 /** Update telemetry, including the mechanism visualization. */
   public void updateTelemetry() {
     // Update flywheel info on dashboard
     SmartDashboard.putNumber("SimplePosition/Velocity", getLeftVelocity());
-    SmartDashboard.putNumber("SimplePosition/p.u.", m_Motor.get());
+    SmartDashboard.putNumber("SimplePosition/p.u.", m_motor.get());
     SmartDashboard.putNumber("SimplePosition/Position", getDistance());
   }
 
   @Override
   public void close() {
-    m_Encoder.close();
-    m_Motor.close();
+    m_encoder.close();
+    m_motor.close();
   }
 
   public Command sysIdQuasistaticCommand(Direction dir) {
@@ -152,12 +152,12 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     log.motor("position")
       .voltage(
         m_appliedVoltage.mut_replace(
-          m_Motor.get() * RobotController.getBatteryVoltage(), Volts))
+          m_motor.get() * RobotController.getBatteryVoltage(), Volts))
       .linearVelocity(
-        m_velocity.mut_replace(m_Encoder.getRate(), MetersPerSecond)
+        m_velocity.mut_replace(m_encoder.getRate(), MetersPerSecond)
       )
       .linearPosition(
-        m_position.mut_replace(m_Encoder.getDistance(), Meters)
+        m_position.mut_replace(m_encoder.getDistance(), Meters)
       );   
   }
 }

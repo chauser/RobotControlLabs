@@ -9,6 +9,12 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.units.Distance;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.MutableMeasure;
+import edu.wpi.first.units.Velocity;
+import edu.wpi.first.units.Voltage;
+import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants;
@@ -22,7 +28,11 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 public class Elevator extends SubsystemBase implements AutoCloseable {
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
@@ -67,6 +77,20 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
       m_mech2dRoot.append(
           new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90));
 
+
+   // Support for SysId
+  private final SysIdRoutine m_sysid = new SysIdRoutine(
+    new SysIdRoutine.Config(), 
+    new SysIdRoutine.Mechanism(
+      (Measure<Voltage> v) -> m_motor.setVoltage(v.in(Volts)),
+      this::logData, 
+      this, 
+      "Elevator Lab")
+  );
+  private final MutableMeasure<Voltage> m_appliedVoltage = Volts.of(0).mutableCopy();
+  private final MutableMeasure<Velocity<Distance>> m_velocity = MetersPerSecond.of(0).mutableCopy();
+  private final MutableMeasure<Distance> m_position = Meters.of(0).mutableCopy();
+
   /** Subsystem constructor. */
   public Elevator() {
     m_encoder.setDistancePerPulse(Constants.kElevatorEncoderDistPerPulse);
@@ -77,6 +101,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   }
 
   /** Advance the simulation. */
+  @Override
   public void simulationPeriodic() {
     // In this method, we update our simulation of what our elevator is doing
     // First, we set our "inputs" (voltages)
@@ -87,9 +112,15 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage
     m_encoderSim.setDistance(m_elevatorSim.getPositionMeters());
+    m_encoderSim.setRate(m_elevatorSim.getVelocityMetersPerSecond());
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
+  }
+
+  @Override
+  public void periodic() {
+    updateTelemetry();
   }
 
   /**
@@ -101,12 +132,20 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     m_controller.setGoal(goal);
 
     // With the setpoint value we run PID control like normal
-    double pidOutput = m_controller.calculate(m_encoder.getDistance());
+    double pidOutput = m_controller.calculate(getPosition());
     double feedforwardOutput = m_feedforward.calculate(
-      m_encoder.getRate(),
+      getVelocity(),
       m_controller.getSetpoint().velocity,
       0.02);
     m_motor.setVoltage(pidOutput + feedforwardOutput);
+  }
+
+  public double getPosition() {
+    return m_encoder.getDistance();
+  }
+
+  public double getVelocity() {
+    return m_encoder.getRate();
   }
 
   /** Stop the control loop and motor output. */
@@ -116,7 +155,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   }
 
   /** Update telemetry, including the mechanism visualization. */
-  public void updateTelemetry() {
+  private void updateTelemetry() {
     // Update elevator visualization with position
     m_elevatorMech2d.setLength(m_encoder.getDistance());
   }
@@ -126,5 +165,26 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     m_encoder.close();
     m_motor.close();
     m_mech2d.close();
+  }
+
+ public Command sysIdQuasistaticCommand(Direction dir) {
+    return m_sysid.quasistatic(dir);
+  }
+  
+  public Command sysIdDynamicCommand(Direction dir) {
+    return m_sysid.dynamic(dir);
+  }
+
+  private void logData(SysIdRoutineLog log) {
+    log.motor("position")
+      .voltage(
+        m_appliedVoltage.mut_replace(
+          m_motor.get() * RobotController.getBatteryVoltage(), Volts))
+      .linearVelocity(
+        m_velocity.mut_replace(m_encoder.getRate(), MetersPerSecond)
+      )
+      .linearPosition(
+        m_position.mut_replace(m_encoder.getDistance(), Meters)
+      );   
   }
 }
