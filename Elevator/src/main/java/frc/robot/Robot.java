@@ -5,9 +5,12 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.controllers.ElevatorController;
+import frc.robot.controllers.ElevatorFFPIDController;
 import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
@@ -19,20 +22,27 @@ public class Robot extends TimedRobot {
 
   private final CommandXboxController m_joystick = new CommandXboxController(Constants.kJoystickPort);
   private final Elevator m_elevator = new Elevator();
+  private final SendableChooser<ElevatorController> m_controllerChooser = new SendableChooser<>();
+  private final ElevatorController m_ppidController = new ElevatorFFPIDController(m_elevator);
 
+  private void runElevator(double setPoint) {
+    var controller = m_controllerChooser.getSelected();
+    controller.setSetpoint(setPoint);
+    m_elevator.setVoltage(controller.calculate());
+  }
+  
   @Override
   public void robotInit() {
     m_elevator.setDefaultCommand(m_elevator.run(m_elevator::stop));
+    m_controllerChooser.setDefaultOption("Feedforward PID", m_ppidController);
+    
+    // For normal operation
     m_joystick.y()
-      .whileTrue(m_elevator
-        .runOnce(() -> m_elevator.initGoal(Constants.kSetpointMeters))
-        .andThen(m_elevator.run(m_elevator::reachGoal))
-      );
+      .whileTrue(m_elevator.run(() -> runElevator(Constants.kSetpointMeters)));
     m_joystick.a()
-      .whileTrue(m_elevator
-        .runOnce(() -> m_elevator.initGoal(0.0))
-        .andThen(m_elevator.run(m_elevator::reachGoal))
-      );
+      .whileTrue(m_elevator.run(() -> runElevator(0.0)));
+
+    // For SysId
     m_joystick.povRight().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kForward));
     m_joystick.povLeft().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kReverse));
     m_joystick.povUp().whileTrue(m_elevator.sysIdDynamicCommand(Direction.kForward));

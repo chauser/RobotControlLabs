@@ -42,28 +42,6 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     public static final int kEncoderBChannel = 1;
     public static final int kJoystickPort = 0;
 
-    // Empirical
-    // public static final double kElevatorKp = 1.0;
-    // public static final double kElevatorKi = 0.0;
-    // public static final double kElevatorKd = 0.0;
-
-    // From WPILib example
-    public static final double kElevatorKp = 5.0;
-    public static final double kElevatorKi = 0.0;
-    public static final double kElevatorKd = 0.0;
-
-    // Constants from sysId
-    // public static final double kElevatorkS = 0.019; // volts (V)
-    // public static final double kElevatorkG = 0.837; // volts (V)
-    // public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
-    // public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
-    
-    // Constants from WPILib example
-    public static final double kElevatorkS = 0.0; // volts (V)
-    public static final double kElevatorkG = 0.762; // volts (V)
-    public static final double kElevatorkV = 0.762; // volt per velocity (V/(m/s))
-    public static final double kElevatorkA = 0.0; // volt per acceleration (V/(m/s²))
-
     public static final double kElevatorGearing = 10.0;
     public static final double kElevatorDrumRadius = Units.inchesToMeters(2.0);
     public static final double kCarriageMass = 4.0; // kg
@@ -77,29 +55,22 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     //  = (Pi * D) / ppr
     public static final double kElevatorEncoderDistPerPulse =
         2.0 * Math.PI * kElevatorDrumRadius / 4096;
+
+    // Smoothing factor for position; update: position = ff*position + (1-ff)*measurement
+    // Set to 0 to use unfiltered measurements.
+    public static final double kFilterFactor = 0.5;
   }
 
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
   private final DCMotor m_elevatorGearbox = DCMotor.getVex775Pro(4);
 
-  // Standard classes for controlling our elevator
-  private final ProfiledPIDController m_controller =
-      new ProfiledPIDController(
-          Constants.kElevatorKp,
-          Constants.kElevatorKi,
-          Constants.kElevatorKd,
-          new TrapezoidProfile.Constraints(2.45, 2.45));
-  ElevatorFeedforward m_feedforward =
-      new ElevatorFeedforward(
-          Constants.kElevatorkS,
-          Constants.kElevatorkG,
-          Constants.kElevatorkV,
-          Constants.kElevatorkA);
+  
   private final Encoder m_encoder =
       new Encoder(Constants.kEncoderAChannel, Constants.kEncoderBChannel);
   private final PWMSparkMax m_motor = new PWMSparkMax(Constants.kMotorPort);
+  private double m_filteredPosition = 0.0;
 
-  // Simulation classes help us simulate what's going on, including gravity.
+   // Simulation classes help us simulate what's going on, including gravity.
   private final ElevatorSim m_elevatorSim =
       new ElevatorSim(
           m_elevatorGearbox,
@@ -110,6 +81,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
           Constants.kMaxElevatorHeightMeters,
           true,
           0,
+          // null);
           VecBuilder.fill(0.01));
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
   private final PWMSim m_motorSim = new PWMSim(m_motor);
@@ -142,7 +114,6 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     // Publish Mechanism2d to SmartDashboard
     // To view the Elevator visualization, select Network Tables -> SmartDashboard -> Elevator Sim
     SmartDashboard.putData("Elevator Sim", m_mech2d);
-    SmartDashboard.putData("Elevator/PID", m_controller);
   }
 
   /** Advance the simulation. */
@@ -165,29 +136,13 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
 
   @Override
   public void periodic() {
+    m_filteredPosition = m_filteredPosition*Constants.kFilterFactor 
+      + m_encoder.getDistance()*(1-Constants.kFilterFactor);
     updateTelemetry();
   }
 
-  /**
-   * Run control loop to reach and maintain goal.
-   *
-   * @param goal the position to maintain
-   */
-
-  public void initGoal(double goal) {
-    m_controller.setGoal(goal);
-  }
-
-  public void reachGoal() {
-    // With the setpoint value we run PID control like normal
-    double pidOutput = m_controller.calculate(getPosition());
-    double feedforwardOutput = m_feedforward.calculate(m_controller.getSetpoint().velocity);
-    SmartDashboard.putNumber("Elevator/Feedback", pidOutput);
-    m_motor.setVoltage(pidOutput + feedforwardOutput);
-  }
-
   public double getPosition() {
-    return m_encoder.getDistance();
+    return m_filteredPosition;
   }
 
   public double getVelocity() {
@@ -196,20 +151,20 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
 
   /** Stop the control loop and motor output. */
   public void stop() {
-    m_controller.setGoal(0.0);
-    m_motor.setVoltage(Constants.kElevatorkG);
+    setVoltage(0.0);
+  }
+
+  public void setVoltage(double volts) {
+    m_motor.setVoltage(volts);
   }
 
   /** Update telemetry, including the mechanism visualization. */
   private void updateTelemetry() {
     SmartDashboard.putNumber("Elevator/Position", getPosition());
     SmartDashboard.putNumber("Elevator/Velocity", getVelocity());
-    var setPoint = m_controller.getSetpoint();
-    SmartDashboard.putNumber("Elevator/Profiled Position", setPoint.position);
-    SmartDashboard.putNumber("Elevator/Profiled Velocity", setPoint.velocity);
     SmartDashboard.putNumber("Elevator/p.u.", m_motor.get());
     // Update elevator visualization with position
-    m_elevatorMech2d.setLength(m_encoder.getDistance());
+    m_elevatorMech2d.setLength(getPosition());
   }
 
   @Override
@@ -236,6 +191,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
         m_velocity.mut_replace(m_encoder.getRate(), MetersPerSecond)
       )
       .linearPosition(
+        // use raw data here rather than filtered position
         m_position.mut_replace(m_encoder.getDistance(), Meters)
       );   
   }
