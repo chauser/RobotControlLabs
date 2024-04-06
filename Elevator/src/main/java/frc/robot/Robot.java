@@ -6,11 +6,13 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.controllers.ElevatorController;
 import frc.robot.controllers.ElevatorFFPIDController;
+import frc.robot.controllers.ElevatorLQRController;
 import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
@@ -24,6 +26,7 @@ public class Robot extends TimedRobot {
   private final Elevator m_elevator = new Elevator();
   private final SendableChooser<ElevatorController> m_controllerChooser = new SendableChooser<>();
   private final ElevatorController m_ppidController = new ElevatorFFPIDController(m_elevator);
+  private final ElevatorController m_lqrController = new ElevatorLQRController(m_elevator);
 
   private void runElevator(double setPoint) {
     var controller = m_controllerChooser.getSelected();
@@ -35,6 +38,8 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     m_elevator.setDefaultCommand(m_elevator.run(m_elevator::stop));
     m_controllerChooser.setDefaultOption("Feedforward PID", m_ppidController);
+    m_controllerChooser.addOption("LQR Controller", m_lqrController);
+    SmartDashboard.putData("Elevator/Controller", m_controllerChooser);
     
     // For normal operation
     m_joystick.y()
