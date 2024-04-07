@@ -11,6 +11,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.Elevator;
 
 public class ElevatorLQRController extends ElevatorController {
@@ -114,6 +115,8 @@ public class ElevatorLQRController extends ElevatorController {
 
         // Step our TrapezoidalProfile forward 20ms and set it as our next reference
         m_lastProfiledReference = m_profile.calculate(0.020, m_lastProfiledReference, m_goal);
+        SmartDashboard.putNumber("Elevator/Profiled Position", m_lastProfiledReference.position);
+        SmartDashboard.putNumber("Elevator/Profiled Velocity", m_lastProfiledReference.velocity);
         m_loop.setNextR(m_lastProfiledReference.position, m_lastProfiledReference.velocity);
     
         // Correct our Kalman filter's state vector estimate with encoder data.
@@ -126,7 +129,7 @@ public class ElevatorLQRController extends ElevatorController {
         // Send the new calculated voltage to the motors.
         // voltage = duty cycle * battery voltage, so
         // duty cycle = voltage / battery voltage
-        double nextVoltage = m_loop.getU(0);
+        double nextVoltage = m_loop.getU(0) + Constants.kElevatorkG;
         return nextVoltage;
       }  
 }

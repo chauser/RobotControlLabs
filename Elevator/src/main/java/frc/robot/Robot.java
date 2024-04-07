@@ -27,6 +27,7 @@ public class Robot extends TimedRobot {
   private final SendableChooser<ElevatorController> m_controllerChooser = new SendableChooser<>();
   private final ElevatorController m_ppidController = new ElevatorFFPIDController(m_elevator);
   private final ElevatorController m_lqrController = new ElevatorLQRController(m_elevator);
+  private final ElevatorController m_holdController = new ElevatorFFPIDController(m_elevator);
 
   private void runElevator(double setPoint) {
     var controller = m_controllerChooser.getSelected();
@@ -36,7 +37,7 @@ public class Robot extends TimedRobot {
   
   @Override
   public void robotInit() {
-    m_elevator.setDefaultCommand(m_elevator.run(m_elevator::stop));
+    m_elevator.setDefaultCommand(m_elevator.run(m_holdController::calculate));
     m_controllerChooser.setDefaultOption("Feedforward PID", m_ppidController);
     m_controllerChooser.addOption("LQR Controller", m_lqrController);
     SmartDashboard.putData("Elevator/Controller", m_controllerChooser);
