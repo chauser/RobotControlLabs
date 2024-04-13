@@ -37,16 +37,17 @@ public class Robot extends TimedRobot {
   
   @Override
   public void robotInit() {
-    m_elevator.setDefaultCommand(m_elevator.run(m_holdController::calculate));
+    m_elevator.setDefaultCommand(m_elevator.run(m_holdController::calculate).withName("Idle"));
     m_controllerChooser.setDefaultOption("Feedforward PID", m_ppidController);
     m_controllerChooser.addOption("LQR Controller", m_lqrController);
     SmartDashboard.putData("Elevator/Controller", m_controllerChooser);
+    SmartDashboard.putData("Scheduler", CommandScheduler.getInstance());
     
     // For normal operation
     m_joystick.y()
-      .whileTrue(m_elevator.run(() -> runElevator(Constants.kSetpointMeters)));
+      .onTrue(m_elevator.run(() -> runElevator(Constants.kSetpointMeters)).withName("High"));
     m_joystick.a()
-      .whileTrue(m_elevator.run(() -> runElevator(0.0)));
+      .onTrue(m_elevator.run(() -> runElevator(0.0)).withName("Low"));
 
     // For SysId
     m_joystick.povRight().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kForward));

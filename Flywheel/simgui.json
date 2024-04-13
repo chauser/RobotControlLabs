@@ -36,12 +36,12 @@
         "Flywheel": {
           "open": true
         },
-        "FlywheelPIDController": {
-          "open": true
-        },
         "open": true
       }
     }
+  },
+  "NetworkTables Info": {
+    "visible": true
   },
   "Plot": {
     "Plot <0>": {
@@ -58,7 +58,7 @@
             0.0,
             0.8500000238418579
           ],
-          "height": 367,
+          "height": 330,
           "series": [
             {
               "color": [
@@ -101,7 +101,7 @@
             0.0,
             0.8500000238418579
           ],
-          "height": 367,
+          "height": 330,
           "series": [
             {
               "color": [

@@ -22,22 +22,21 @@ public class ElevatorLQRController extends ElevatorController {
         // public static final double kElevatorKi = 0.0;
         // public static final double kElevatorKd = 0.0;
 
-        // From WPILib example
-        public static final double kElevatorKp = 5.0;
-        public static final double kElevatorKi = 0.0;
-        public static final double kElevatorKd = 0.0;
 
         // Constants from sysId
-        // public static final double kElevatorkS = 0.019; // volts (V)
-        // public static final double kElevatorkG = 0.837; // volts (V)
+        // We need these because they are not modelled in the LinearSystem
+        public static final double kElevatorkS = 0.024; // volts (V)
+        public static final double kElevatorkG = 0.458; // volts (V)
+
+
         // public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
         // public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
         
         // Constants from WPILib example
-        public static final double kElevatorkS = 0.0; // volts (V)
-        public static final double kElevatorkG = 0.762; // volts (V)
-        public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
-        public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
+        // public static final double kElevatorkS = 0.0; // volts (V)
+        // public static final double kElevatorkG = 0.762; // volts (V)
+        // public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
+        // public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
     }
 
     // Standard classes for controlling our elevator
@@ -59,7 +58,8 @@ public class ElevatorLQRController extends ElevatorController {
     */
     private final LinearSystem<N2, N1, N1> m_elevatorPlant =
         LinearSystemId.createElevatorSystem(
-            DCMotor.getVex775Pro(4), Elevator.Constants.kCarriageMass, 
+            DCMotor.getNEO(2), 
+            Elevator.Constants.kCarriageMass, 
             Elevator.Constants.kElevatorDrumRadius, 
             Elevator.Constants.kElevatorGearing);
 
@@ -92,7 +92,11 @@ public class ElevatorLQRController extends ElevatorController {
 
     // The state-space loop combines a controller, observer, feedforward and plant for easy control.
     private final LinearSystemLoop<N2, N1, N1> m_loop =
-        new LinearSystemLoop<>(m_elevatorPlant, m_controller, m_observer, 12.0, 0.020);
+        new LinearSystemLoop<>(m_elevatorPlant, 
+                               m_controller, 
+                               m_observer, 
+                               12.0, 
+                               0.020);
 
 
     public ElevatorLQRController(Elevator elevator) {
@@ -101,7 +105,7 @@ public class ElevatorLQRController extends ElevatorController {
       
     @Override
     public void setSetpoint(double height) {
-        if (height != m_setpoint) {
+        if (height != m_setpoint || m_goal == null) {
             super.setSetpoint(height);
             m_goal = new TrapezoidProfile.State(height, 0.0);
         }
@@ -117,6 +121,7 @@ public class ElevatorLQRController extends ElevatorController {
         m_lastProfiledReference = m_profile.calculate(0.020, m_lastProfiledReference, m_goal);
         SmartDashboard.putNumber("Elevator/Profiled Position", m_lastProfiledReference.position);
         SmartDashboard.putNumber("Elevator/Profiled Velocity", m_lastProfiledReference.velocity);
+
         m_loop.setNextR(m_lastProfiledReference.position, m_lastProfiledReference.velocity);
     
         // Correct our Kalman filter's state vector estimate with encoder data.
@@ -125,11 +130,14 @@ public class ElevatorLQRController extends ElevatorController {
         // Update our LQR to generate new voltage commands and use the voltages to predict the next
         // state with out Kalman filter.
         m_loop.predict(0.020);
+        SmartDashboard.putNumber("Elevator/SE Position", m_loop.getXHat(0));
+        SmartDashboard.putNumber("Elevator/SE Velocity", m_loop.getXHat(1));
     
         // Send the new calculated voltage to the motors.
         // voltage = duty cycle * battery voltage, so
         // duty cycle = voltage / battery voltage
-        double nextVoltage = m_loop.getU(0) + Constants.kElevatorkG;
-        return nextVoltage;
+        double nextVoltage = m_loop.getU(0); // + Constants.kElevatorkG;
+        // add static offset and gravity offset
+        return nextVoltage + Math.copySign(Constants.kElevatorkS, nextVoltage) + Constants.kElevatorkG;
       }  
 }

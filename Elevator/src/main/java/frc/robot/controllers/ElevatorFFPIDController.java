@@ -20,16 +20,11 @@ public class ElevatorFFPIDController extends ElevatorController {
         public static final double kElevatorKd = 0.0;
 
         // Constants from sysId
-        // public static final double kElevatorkS = 0.019; // volts (V)
-        // public static final double kElevatorkG = 0.837; // volts (V)
-        // public static final double kElevatorkV = 1.19; // volt per velocity (V/(m/s))
-        // public static final double kElevatorkA = 0.086; // volt per acceleration (V/(m/s²))
+        public static final double kElevatorkS = 0.024; // volts (V)
+        public static final double kElevatorkG = 0.458; // volts (V)
+        public static final double kElevatorkV = 3.86; // volt per velocity (V/(m/s))
+        public static final double kElevatorkA = 0.042; // volt per acceleration (V/(m/s²))
         
-        // Constants from WPILib example
-        public static final double kElevatorkS = 0.0; // volts (V)
-        public static final double kElevatorkG = 0.762; // volts (V)
-        public static final double kElevatorkV = 0.762; // volt per velocity (V/(m/s))
-        public static final double kElevatorkA = 0.0; // volt per acceleration (V/(m/s²))
     }
 
     // Standard classes for controlling our elevator

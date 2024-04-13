@@ -33,27 +33,32 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
  */
 
 public class Flywheel extends SubsystemBase implements AutoCloseable {
-  private static class FlywheelConstants {
+  public static class Constants {
     static int kEncoderAChannel = 0;
     static int kEncoderBChannel = 1;
     static int kMotorPort = 0;
-    static double kFlywheelGearing = 10.0;
-    static double kFlywheelMomentOfInertia = 0.01; //Kg*M^2 -- 1kg at .1M radius e.g.
-    static double kFlywheelEncoderDistPerPulse = 1.0; // 1 pulse per revolution
+    public static double kGearing = 10.0;
+    public static double kMomentOfInertia = 0.01; //Kg*M^2 -- 1kg at .1M radius e.g.
+    static double kEncoderDistPerPulse = 1.0; // 1 pulse per revolution
+    public static double kSlewRateLimit = 2000; // RPM/second
+    // These constants determined by running SydId on this simulated flywheel
+    public static double kS = 0.011;   // Volts
+    public static double kV = 0.00637; // Volts/RPM
+    public static double kA = 0.0017;  // (Volts/RPM)/second 
   }
-  // This gearbox represents a gearbox containing 4 Vex 775pro motors.
+  // This gearbox represents a gearbox containing 1 Vex 775pro.
   private final DCMotor m_flywheelGearbox = DCMotor.getVex775Pro(1);
 
   private final Encoder m_encoder =
-      new Encoder(FlywheelConstants.kEncoderAChannel, FlywheelConstants.kEncoderBChannel);
-  private final PWMSparkMax m_motor = new PWMSparkMax(FlywheelConstants.kMotorPort);
+      new Encoder(Constants.kEncoderAChannel, Constants.kEncoderBChannel);
+  private final PWMSparkMax m_motor = new PWMSparkMax(Constants.kMotorPort);
 
   // Simulation classes help us simulate what's going on, including gravity.
   private final FlywheelSim m_flywheelSim =
       new FlywheelSim(
           m_flywheelGearbox,
-          FlywheelConstants.kFlywheelGearing,
-          FlywheelConstants.kFlywheelMomentOfInertia
+          Constants.kGearing,
+          Constants.kMomentOfInertia
       );
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
   private final PWMSim m_motorSim = new PWMSim(m_motor);
@@ -74,7 +79,7 @@ public class Flywheel extends SubsystemBase implements AutoCloseable {
 
   /** Subsystem constructor. */
   public Flywheel() {
-    m_encoder.setDistancePerPulse(FlywheelConstants.kFlywheelEncoderDistPerPulse);
+    m_encoder.setDistancePerPulse(Constants.kEncoderDistPerPulse);
   }
 
   double m_prevTime = Timer.getFPGATimestamp();

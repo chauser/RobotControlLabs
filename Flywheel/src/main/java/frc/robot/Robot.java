@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.controllers.FlywheelBangBangController;
 import frc.robot.controllers.FlywheelController;
 import frc.robot.controllers.FlywheelFeedforwardPIDController;
+import frc.robot.controllers.FlywheelLQRController;
 import frc.robot.controllers.FlywheelFeedforwardController;
 import frc.robot.controllers.FlywheelPIDController;
 import frc.robot.subsystems.Flywheel;
@@ -31,6 +32,8 @@ public class Robot extends TimedRobot {
   private final FlywheelController m_FFwithSlewRateController = new FlywheelFeedforwardController(m_flywheel, true);
   private final FlywheelController m_FFPID = new FlywheelFeedforwardPIDController(m_flywheel, false);
   private final FlywheelController m_FFPIDSlew = new FlywheelFeedforwardPIDController(m_flywheel, true);
+  private final FlywheelController m_LQR = new FlywheelLQRController(m_flywheel, false);
+  private final FlywheelController m_LQRSlew = new FlywheelLQRController(m_flywheel, true);
   private FlywheelController m_currentController = m_bangbangController;
  
   @Override
@@ -42,6 +45,8 @@ public class Robot extends TimedRobot {
     m_controllerChooser.addOption("FeedForward with SlewRateLimiter", m_FFwithSlewRateController);
     m_controllerChooser.addOption("FF+PID", m_FFPID);
     m_controllerChooser.addOption("FF+PID+Slew", m_FFPIDSlew);
+    m_controllerChooser.addOption("LQR", m_LQR);
+    m_controllerChooser.addOption("LQR+Slew", m_LQRSlew);
     m_flywheel.setDefaultCommand(m_flywheel.run(() -> {
       // Find out what controller should be used and update it
       m_currentController = m_controllerChooser.getSelected();

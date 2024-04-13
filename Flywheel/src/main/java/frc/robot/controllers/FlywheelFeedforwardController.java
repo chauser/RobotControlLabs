@@ -11,10 +11,7 @@ public class FlywheelFeedforwardController extends FlywheelController{
     SlewRateLimiter m_slewRateLimiter = new SlewRateLimiter(FeedforwardConstants.slewRateLimit);
 
     static class FeedforwardConstants {
-        // These constants determined by running SydId on this simulated flywheel
-        static double kS = 0.011;   // Volts
-        static double kV = 0.00637; // Volts/RPM
-        static double kA = 0.0017;  // (Volts/RPM)/second
+        
 
         // What if we get them a bit wrong -- with these values the steady-state speed is 940RPM
         // when using the slew rate limiter and only 500RPM without it (because the code 
@@ -32,7 +29,7 @@ public class FlywheelFeedforwardController extends FlywheelController{
 
     public FlywheelFeedforwardController(Flywheel flywheel, boolean useSlewRateLimiter) {
         super(flywheel);
-        m_feedforward = new SimpleMotorFeedforward(FeedforwardConstants.kS, FeedforwardConstants.kV, FeedforwardConstants.kA);
+        m_feedforward = new SimpleMotorFeedforward(Flywheel.Constants.kS, Flywheel.Constants.kV, Flywheel.Constants.kA);
         m_useSlewRateLimiter = useSlewRateLimiter;
     }
 

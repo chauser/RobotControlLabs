@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.Distance;
 import edu.wpi.first.units.Measure;
@@ -59,7 +60,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   }
 
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
-  private final DCMotor m_elevatorGearbox = DCMotor.getVex775Pro(4);
+  private final DCMotor m_elevatorGearbox = DCMotor.getNEO(2);
 
   
   private final Encoder m_encoder =
@@ -68,18 +69,18 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   private double m_filteredPosition = 0.0;
 
    // Simulation classes help us simulate what's going on, including gravity.
-  private final ElevatorSim m_elevatorSim =
-      new ElevatorSim(
-          m_elevatorGearbox,
-          Constants.kElevatorGearing,
-          Constants.kCarriageMass,
-          Constants.kElevatorDrumRadius,
-          Constants.kMinElevatorHeightMeters,
-          Constants.kMaxElevatorHeightMeters,
-          true,
-          0,
-          // null);
-          VecBuilder.fill(0.01));
+  private final ElevatorSim m_elevatorSim = new ElevatorSim(
+    LinearSystemId.createElevatorSystem(
+          DCMotor.getNEO(2), 
+          Constants.kCarriageMass, 
+          Constants.kElevatorDrumRadius, 
+          Constants.kElevatorGearing),
+    DCMotor.getNEO(2),
+    0.0,
+    1.0,
+    true,
+    0.0);
+
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
   private final PWMSim m_motorSim = new PWMSim(m_motor);
 
@@ -133,8 +134,9 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
 
   @Override
   public void periodic() {
-    m_filteredPosition = m_filteredPosition*Constants.kFilterFactor 
-      + m_encoder.getDistance()*(1-Constants.kFilterFactor);
+    m_filteredPosition = m_encoder.getDistance();
+    // m_filteredPosition = m_filteredPosition*Constants.kFilterFactor 
+      // + m_encoder.getDistance()*(1-Constants.kFilterFactor);
     updateTelemetry();
   }
 
