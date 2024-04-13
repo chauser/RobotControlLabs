@@ -29,7 +29,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
  */
 
 public class SimplePositionMechanism extends SubsystemBase implements AutoCloseable {
-  private static class DrivetrainConstants {
+  public static class Constants {
     static int kEncoderAChannel = 0;
     static int kEncoderBChannel = 1;
     static int kMotorPort = 0;
@@ -37,25 +37,46 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     static double kWheelRadius = 0.05; //Meter
     static double kMassKg = 50;
     static double kTrackWidthMeters = 3.0/4.0;
-    static double kMOI = kMassKg * Math.pow(DrivetrainConstants.kTrackWidthMeters/4.0, 2);
+    static double kMOI = kMassKg * Math.pow(Constants.kTrackWidthMeters/4.0, 2);
     static double kEncoderDistPerPulse = Math.PI*2*kWheelRadius/kGearing; // 1 pulse per motor revolution
+    public static final int kControllerPort = 0;
+    public static final double kSetpointDistance = 3.0;
+    public static final double kSetpointTolerance = 0.025;
+    // These constants determined by running SydId on this mechanism
+    // static double kS = 0.012;   // Volts
+    // static double kV = 4.23; // Volts/(M/s)
+    // static double kA = 0.30;  // Volts/(M/s^2)
+
+    // What if we get them a bit wrong -- these are 10% more than the correct values
+    // static double kS = 0.013; // Volts
+    // static double kV = 4.65;  // Volts/(M/s)
+    // static double kA = 0.33;  // Volts/(M/s^2)
+
+    // ... or a lot wrong -- these are 50% of the correct values
+    static double kS = 0.006; // Volts
+    static double kV = 2.12;  // Volts/(M/s)
+    static double kA = 0.15;  // Volts/(M/s^2)
+    
+    static double maxVel = 2.5; // Meters/second
+    static double maxAccel = 8; // Meters/second^2
   }
+
   // This gearbox represents a gearbox containing 2 Vex 775pro motors.
   private final DCMotor m_gearbox = DCMotor.getNEO(2);
 
   private final Encoder m_encoder =
-      new Encoder(DrivetrainConstants.kEncoderAChannel, DrivetrainConstants.kEncoderBChannel);
-  private final PWMSparkMax m_motor = new PWMSparkMax(DrivetrainConstants.kMotorPort);
+      new Encoder(Constants.kEncoderAChannel, Constants.kEncoderBChannel);
+  private final PWMSparkMax m_motor = new PWMSparkMax(Constants.kMotorPort);
 
   // Simulation classes help us simulate what's going on, including gravity.
   private final DifferentialDrivetrainSim m_drivetrainSim =
       new DifferentialDrivetrainSim(
         m_gearbox,
-        DrivetrainConstants.kGearing,
-        DrivetrainConstants.kMOI,
-        DrivetrainConstants.kMassKg,
-        DrivetrainConstants.kWheelRadius,
-        DrivetrainConstants.kTrackWidthMeters,
+        Constants.kGearing,
+        Constants.kMOI,
+        Constants.kMassKg,
+        Constants.kWheelRadius,
+        Constants.kTrackWidthMeters,
         null);
 
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
@@ -76,7 +97,7 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
 
   /** Subsystem constructor. */
   public SimplePositionMechanism() {
-    m_encoder.setDistancePerPulse(DrivetrainConstants.kEncoderDistPerPulse);
+    m_encoder.setDistancePerPulse(Constants.kEncoderDistPerPulse);
   }
 
   double m_prevTime = Timer.getFPGATimestamp();
@@ -118,7 +139,7 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     setVoltage(0.0);
   }
 
-  public double getLeftVelocity() {
+  public double getVelocity() {
     return m_encoder.getRate();
   }
 
@@ -129,7 +150,7 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
 /** Update telemetry, including the mechanism visualization. */
   public void updateTelemetry() {
     // Update flywheel info on dashboard
-    SmartDashboard.putNumber("SimplePosition/Velocity", getLeftVelocity());
+    SmartDashboard.putNumber("SimplePosition/Velocity", getVelocity());
     SmartDashboard.putNumber("SimplePosition/p.u.", m_motor.get());
     SmartDashboard.putNumber("SimplePosition/Position", getDistance());
   }
