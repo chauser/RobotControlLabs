@@ -53,12 +53,12 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
     // static double kA = 0.33;  // Volts/(M/s^2)
 
     // ... or a lot wrong -- these are 50% of the correct values
-    static double kS = 0.006; // Volts
-    static double kV = 2.12;  // Volts/(M/s)
-    static double kA = 0.15;  // Volts/(M/s^2)
-    
-    static double maxVel = 2.5; // Meters/second
-    static double maxAccel = 8; // Meters/second^2
+    public static double kS = 0.006; // Volts
+    public static double kV = 2.12;  // Volts/(M/s)
+    public static double kA = 0.15;  // Volts/(M/s^2)
+
+    public static double maxVel = 2.5; // Meters/second
+    public static double maxAccel = 8; // Meters/second^2
   }
 
   // This gearbox represents a gearbox containing 2 Vex 775pro motors.

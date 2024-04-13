@@ -15,6 +15,7 @@ import frc.robot.controllers.SimplePositionProfiledPIDController;
 import frc.robot.controllers.SimplePositionFeedforwardController;
 import frc.robot.controllers.SimplePositionPIDController;
 import frc.robot.subsystems.SimplePositionMechanism;
+import frc.robot.subsystems.SimplePositionMechanism.Constants;
 
 /** This is a program to introduce various controllers for flywheels and 
  *  allow exploration of their behaviors
