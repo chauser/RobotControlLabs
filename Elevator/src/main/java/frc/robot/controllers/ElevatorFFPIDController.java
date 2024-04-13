@@ -5,10 +5,11 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Elevator.Constants;
 
 public class ElevatorFFPIDController extends ElevatorController {
 
-    static class Constants {
+    static class PIDConstants {
         // Empirical
         // public static final double kElevatorKp = 1.0;
         // public static final double kElevatorKi = 0.0;
@@ -17,22 +18,15 @@ public class ElevatorFFPIDController extends ElevatorController {
         // From WPILib example
         public static final double kElevatorKp = 5.0;
         public static final double kElevatorKi = 0.0;
-        public static final double kElevatorKd = 0.0;
-
-        // Constants from sysId
-        public static final double kElevatorkS = 0.024; // volts (V)
-        public static final double kElevatorkG = 0.458; // volts (V)
-        public static final double kElevatorkV = 3.86; // volt per velocity (V/(m/s))
-        public static final double kElevatorkA = 0.042; // volt per acceleration (V/(m/s²))
-        
+        public static final double kElevatorKd = 0.0;      
     }
 
     // Standard classes for controlling our elevator
   private final ProfiledPIDController m_ppid =
       new ProfiledPIDController(
-          Constants.kElevatorKp,
-          Constants.kElevatorKi,
-          Constants.kElevatorKd,
+          PIDConstants.kElevatorKp,
+          PIDConstants.kElevatorKi,
+          PIDConstants.kElevatorKd,
           new TrapezoidProfile.Constraints(2.45, 2.45));
   
     ElevatorFeedforward m_feedforward =

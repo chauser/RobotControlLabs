@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -57,12 +56,14 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     // Smoothing factor for position; update: position = ff*position + (1-ff)*measurement
     // Set to 0 to use unfiltered measurements.
     public static final double kFilterFactor = 0.5;
+
+    // Constants from sysId
+    public static final double kElevatorkS = 0.024; // volts (V)
+    public static final double kElevatorkG = 0.458; // volts (V)
+    public static final double kElevatorkV = 3.86; // volt per velocity (V/(m/s))
+    public static final double kElevatorkA = 0.042; // volt per acceleration (V/(m/s²))
   }
 
-  // This gearbox represents a gearbox containing 4 Vex 775pro motors.
-  private final DCMotor m_elevatorGearbox = DCMotor.getNEO(2);
-
-  
   private final Encoder m_encoder =
       new Encoder(Constants.kEncoderAChannel, Constants.kEncoderBChannel);
   private final PWMSparkMax m_motor = new PWMSparkMax(Constants.kMotorPort);
