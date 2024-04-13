@@ -5,36 +5,15 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.Flywheel;
+import frc.robot.subsystems.Flywheel.Constants;
 
 public class FlywheelFeedforwardPIDController extends FlywheelController{
     SimpleMotorFeedforward m_feedforward;
     PIDController m_pid;
     double m_lastFeedback = 0.0;
     boolean m_useSlewRateLimiter;
-    SlewRateLimiter m_slewRateLimiter = new SlewRateLimiter(FeedforwardConstants.slewRateLimit);
+    SlewRateLimiter m_slewRateLimiter = new SlewRateLimiter(Constants.kSlewRateLimit);
 
-    static class FeedforwardConstants {
-        // These constants determined by running SydId on this simulated flywheel
-        // static double kS = 0.011;   // Volts
-        // static double kV = 0.00637; // Volts/RPM
-        // static double kA = 0.0017;  // (Volts/RPM)/second
-
-        // What if we get them a lot wrong -- with these values the steady-state speed is 940RPM
-        // when using the slew rate limiter and only 500RPM without it (because the code 
-        // below actually puts feedback into the feedforward controller)
-        // static double kS = 0.0055;   // Volts
-        // static double kV = 0.00315; // Volts/RPM
-        // static double kA = 0.0009;  // (Volts/RPM)/second
-
-        // What if we get them only a bit wrong -- with these values the steady-state speed is 940RPM
-        // when using the slew rate limiter and only 500RPM without it (because the code 
-        // below actually puts feedback into the feedforward controller)
-        static double kS = 0.012;   // Volts
-        static double kV = 0.0070; // Volts/RPM
-        static double kA = 0.0019;  // (Volts/RPM)/second
-
-        static double slewRateLimit = 3000; // RPM/second - get to 1000 in 1/3 second
-    }
     static class PIDConstants {
         // These constants determined by running SydId on this simulated flywheel
         // and dividing by 60 to convert SysID's RPS calculation to RPM
@@ -57,7 +36,7 @@ public class FlywheelFeedforwardPIDController extends FlywheelController{
         super(flywheel);
         m_pid = new PIDController(PIDConstants.kP, PIDConstants.kI, PIDConstants.kD);
         SmartDashboard.putData("FFPID", m_pid);
-        m_feedforward = new SimpleMotorFeedforward(FeedforwardConstants.kS, FeedforwardConstants.kV, FeedforwardConstants.kA);
+        m_feedforward = new SimpleMotorFeedforward(Constants.kS, Constants.kV, Constants.kA);
         m_useSlewRateLimiter = useSlewRateLimiter;
     }
 
