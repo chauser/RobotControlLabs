@@ -37,7 +37,7 @@ public class SimplePositionPIDController extends SimplePositionController{
     @Override
     public double calculate() {
 
-        var output = m_pid.calculate(m_mechanism.getLeftDistance());
+        var output = m_pid.calculate(m_mechanism.getDistance());
         output = m_pid.atSetpoint() ? 0.0 : output;
         SmartDashboard.putNumber("Feedback", output);
         return output;

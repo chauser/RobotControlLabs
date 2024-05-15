@@ -39,7 +39,7 @@ public class SimplePositionFeedforwardController extends SimplePositionControlle
     public void setSetpoint(double position, double tolerance) {
         m_setpoint = position;
         m_goal = new TrapezoidProfile.State(position, 0.0);
-        m_nextState = new TrapezoidProfile.State(m_mechanism.getLeftDistance(), m_mechanism.getLeftVelocity());
+        m_nextState = new TrapezoidProfile.State(m_mechanism.getDistance(), m_mechanism.getLeftVelocity());
         m_tolerance = tolerance;
     }
 
@@ -49,13 +49,12 @@ public class SimplePositionFeedforwardController extends SimplePositionControlle
     }
 
     public double calculate() {
-        var currentPosition = m_mechanism.getLeftDistance();
+        var currentPosition = m_mechanism.getDistance();
         if (Math.abs(currentPosition - m_goal.position)<m_tolerance) {
             SmartDashboard.putNumber("SimplePosition/Profile Distance", m_nextState.position);
             SmartDashboard.putNumber("SimplePosition/Profile Velocity", 0.0);
             return 0.0; }
         var currentState = new TrapezoidProfile.State(currentPosition, m_mechanism.getLeftVelocity());
-        var prevState = m_nextState;
         // no replanning
         m_nextState = m_trapezoidProfile.calculate(0.02, m_nextState, m_goal);
         // replanning - problem with replanning is that it will get "stuck" when 
