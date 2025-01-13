@@ -5,11 +5,11 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.Angle;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.MutableMeasure;
-import edu.wpi.first.units.Velocity;
-import edu.wpi.first.units.Voltage;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.MutAngle;
+import edu.wpi.first.units.measure.MutAngularVelocity;
+import edu.wpi.first.units.measure.MutVoltage;
+import edu.wpi.first.units.measure.Voltage;
 import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
@@ -53,29 +53,28 @@ public class Flywheel extends SubsystemBase implements AutoCloseable {
       new Encoder(Constants.kEncoderAChannel, Constants.kEncoderBChannel);
   private final PWMSparkMax m_motor = new PWMSparkMax(Constants.kMotorPort);
 
-  // Simulation classes help us simulate what's going on, including gravity.
+  // Simulation classes help us simulate what's going on
   private final FlywheelSim m_flywheelSim =
       new FlywheelSim(
-          m_flywheelGearbox,
-          Constants.kGearing,
-          Constants.kMomentOfInertia
+          LinearSystemId.createFlywheelSystem(m_flywheelGearbox, Constants.kMomentOfInertia, Constants.kGearing),
+          m_flywheelGearbox
       );
+
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
   private final PWMSim m_motorSim = new PWMSim(m_motor);
-
 
   // Support for SysId
   private final SysIdRoutine m_sysid = new SysIdRoutine(
     new SysIdRoutine.Config(), 
     new SysIdRoutine.Mechanism(
-      (Measure<Voltage> v) -> setVoltage(v.in(Volts)),
+      (Voltage v) -> setVoltage(v.in(Volts)),
       this::logData, 
       this, 
       "Flywheel Lab")
   );
-  private final MutableMeasure<Voltage> m_appliedVoltage = Volts.of(0).mutableCopy();
-  private final MutableMeasure<Velocity<Angle>> m_velocity = RotationsPerSecond.of(0).mutableCopy();
-  private final MutableMeasure<Angle> m_position = Rotations.of(0).mutableCopy();
+  private final MutVoltage m_appliedVoltage = Volts.of(0).mutableCopy();
+  private final MutAngularVelocity m_velocity = RotationsPerSecond.of(0).mutableCopy();
+  private final MutAngle m_position = Rotations.of(0).mutableCopy();
 
   /** Subsystem constructor. */
   public Flywheel() {

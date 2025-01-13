@@ -5,7 +5,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.*;
+import edu.wpi.first.units.measure.*;
 import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
@@ -86,14 +86,14 @@ public class SimplePositionMechanism extends SubsystemBase implements AutoClosea
   private final SysIdRoutine m_sysid = new SysIdRoutine(
     new SysIdRoutine.Config(), 
     new SysIdRoutine.Mechanism(
-      (Measure<Voltage> v) -> setVoltage(v.in(Volts)),
+      (Voltage v) -> setVoltage(v.in(Volts)),
       this::logData, 
       this, 
       "SimplePosition Lab")
   );
-  private final MutableMeasure<Voltage> m_appliedVoltage = Volts.of(0).mutableCopy();
-  private final MutableMeasure<Velocity<Distance>> m_velocity = MetersPerSecond.of(0).mutableCopy();
-  private final MutableMeasure<Distance> m_position = Meters.of(0).mutableCopy();
+  private final MutVoltage m_appliedVoltage = Volts.of(0).mutableCopy();
+  private final MutLinearVelocity m_velocity = MetersPerSecond.of(0).mutableCopy();
+  private final MutDistance m_position = Meters.of(0).mutableCopy();
 
   /** Subsystem constructor. */
   public SimplePositionMechanism() {

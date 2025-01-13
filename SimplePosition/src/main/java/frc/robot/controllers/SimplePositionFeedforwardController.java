@@ -47,7 +47,7 @@ public class SimplePositionFeedforwardController extends SimplePositionControlle
         
         SmartDashboard.putNumber("SimplePosition/Profile Distance", m_nextState.position);
         SmartDashboard.putNumber("SimplePosition/Profile Velocity", m_nextState.velocity);
-        return m_feedforward.calculate(currentState.velocity, m_nextState.velocity, 0.02);
+        return m_feedforward.calculateWithVelocities(currentState.velocity, m_nextState.velocity);
     }
     
 }

@@ -28,7 +28,7 @@ public class FlywheelFeedforwardController extends FlywheelController{
             var lastSetpoint = m_slewRateLimiter.lastValue();
             var newSetpoint = m_slewRateLimiter.calculate(m_setpoint);
             SmartDashboard.putNumber("Flywheel/slew-rate limited setpoint", newSetpoint);
-            return m_feedforward.calculate(lastSetpoint, newSetpoint, 0.02); // pure feedforward
+            return m_feedforward.calculateWithVelocities(lastSetpoint, newSetpoint); // pure feedforward
             // return m_feedforward.calculate(m_flywheel.getRPM(), newSetpoint, 0.02); // feedback actual RPM
         }
     }

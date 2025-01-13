@@ -64,7 +64,7 @@ public class FlywheelFeedforwardPIDController extends FlywheelController{
             // return m_feedforward.calculate(lastSetpoint, newSetpoint, 0.02); // pure feedforward
             m_lastFeedback += m_pid.calculate(m_flywheel.getRPM());
             SmartDashboard.putNumber("Feedback", m_lastFeedback);
-            return m_feedforward.calculate(m_flywheel.getRPM(), newSetpoint, 0.02)+m_lastFeedback; // feedback actual RPM
+            return m_feedforward.calculateWithVelocities(m_flywheel.getRPM(), newSetpoint)+m_lastFeedback; // feedback actual RPM
             // return m_feedforward.calculate(lastSetpoint, newSetpoint, 0.02)+m_lastFeedback;
         }
     }
