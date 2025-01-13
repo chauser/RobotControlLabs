@@ -7,11 +7,10 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Distance;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.MutableMeasure;
-import edu.wpi.first.units.Velocity;
-import edu.wpi.first.units.Voltage;
+import edu.wpi.first.units.measure.MutDistance;
+import edu.wpi.first.units.measure.MutLinearVelocity;
+import edu.wpi.first.units.measure.MutVoltage;
+import edu.wpi.first.units.measure.Voltage;
 import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotController;
@@ -72,7 +71,7 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
    // Simulation classes help us simulate what's going on, including gravity.
   private final ElevatorSim m_elevatorSim = new ElevatorSim(
     LinearSystemId.createElevatorSystem(
-          DCMotor.getNEO(2), 
+          DCMotor.getKrakenX60(1), 
           Constants.kCarriageMass, 
           Constants.kElevatorDrumRadius, 
           Constants.kElevatorGearing),
@@ -80,7 +79,8 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
     0.0,
     1.0,
     true,
-    0.0);
+    0.0
+    );
 
   private final EncoderSim m_encoderSim = new EncoderSim(m_encoder);
   private final PWMSim m_motorSim = new PWMSim(m_motor);
@@ -97,14 +97,14 @@ public class Elevator extends SubsystemBase implements AutoCloseable {
   private final SysIdRoutine m_sysid = new SysIdRoutine(
     new SysIdRoutine.Config(), 
     new SysIdRoutine.Mechanism(
-      (Measure<Voltage> v) -> m_motor.setVoltage(v.in(Volts)),
+      (Voltage v) -> m_motor.setVoltage(v.in(Volts)),
       this::logData, 
       this, 
       "Elevator Lab")
   );
-  private final MutableMeasure<Voltage> m_appliedVoltage = Volts.of(0).mutableCopy();
-  private final MutableMeasure<Velocity<Distance>> m_velocity = MetersPerSecond.of(0).mutableCopy();
-  private final MutableMeasure<Distance> m_position = Meters.of(0).mutableCopy();
+  private final MutVoltage m_appliedVoltage = Volts.of(0).mutableCopy();
+  private final MutLinearVelocity m_velocity = MetersPerSecond.of(0).mutableCopy();
+  private final MutDistance m_position = Meters.of(0).mutableCopy();
 
   /** Subsystem constructor. */
   public Elevator() {

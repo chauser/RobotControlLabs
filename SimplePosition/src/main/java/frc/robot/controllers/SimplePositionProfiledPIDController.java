@@ -52,7 +52,7 @@ public class SimplePositionProfiledPIDController extends SimplePositionControlle
 
     public double calculate() {
         double output = m_ppid.calculate(m_mechanism.getDistance(), m_setpoint);
-        doublevar ff = m_feedforward.calculateWithVelocities(m_mechanism.getVelocity(), m_ppid.getSetpoint().velocity);
+        double ff = m_feedforward.calculateWithVelocities(m_mechanism.getVelocity(), m_ppid.getSetpoint().velocity);
         SmartDashboard.putNumber("SimplePosition/Profile Distance", m_ppid.getSetpoint().position);
         SmartDashboard.putNumber("SimplePosition/Profile Velocity", m_ppid.getSetpoint().velocity);
         SmartDashboard.putNumber("Feedback", output);
