@@ -4,50 +4,39 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
+
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.controllers.ElevatorController;
-import frc.robot.controllers.ElevatorFFPIDController;
-import frc.robot.controllers.ElevatorLQRController;
 import frc.robot.subsystems.Elevator;
 
 /** This is a sample program to demonstrate the use of elevator simulation. */
 public class Robot extends TimedRobot {
   static class Constants {
-    static final double kSetpointMeters = 0.75;
+    static final Distance kSetpoint = Meters.of(0.75);
     static final int kJoystickPort = 0;
   }
 
   private final CommandXboxController m_joystick = new CommandXboxController(Constants.kJoystickPort);
   private final Elevator m_elevator = new Elevator();
-  private final SendableChooser<ElevatorController> m_controllerChooser = new SendableChooser<>();
-  private final ElevatorController m_ppidController = new ElevatorFFPIDController(m_elevator);
-  private final ElevatorController m_lqrController = new ElevatorLQRController(m_elevator);
-  private final ElevatorController m_holdController = new ElevatorFFPIDController(m_elevator);
-
-  private void runElevator(double setPoint) {
-    var controller = m_controllerChooser.getSelected();
-    controller.setSetpoint(setPoint);
-    m_elevator.setVoltage(controller.calculate());
+  
+  private void runElevator(Distance setPoint) {
+    m_elevator.setSetpoint(setPoint);
   }
   
   @Override
   public void robotInit() {
-    m_elevator.setDefaultCommand(m_elevator.run(m_holdController::calculate).withName("Idle"));
-    m_controllerChooser.setDefaultOption("Feedforward PID", m_ppidController);
-    m_controllerChooser.addOption("LQR Controller", m_lqrController);
-    SmartDashboard.putData("Elevator/Controller", m_controllerChooser);
     SmartDashboard.putData("Scheduler", CommandScheduler.getInstance());
     
     // For normal operation
     m_joystick.y()
-      .onTrue(m_elevator.run(() -> runElevator(Constants.kSetpointMeters)).withName("High"));
+      .onTrue(m_elevator.run(() -> runElevator(Constants.kSetpoint)).withName("High"));
     m_joystick.a()
-      .onTrue(m_elevator.run(() -> runElevator(0.0)).withName("Low"));
+      .onTrue(m_elevator.run(() -> runElevator(Meters.of(0.0))).withName("Low"));
 
     // For SysId
     m_joystick.povRight().whileTrue(m_elevator.sysIdQuasistaticCommand(Direction.kForward));
